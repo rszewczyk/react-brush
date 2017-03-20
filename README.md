@@ -32,13 +32,13 @@ This will render an `svg` with a brush overlay that is enabled when the user pre
 
 The callbacks will receive a single object parameter with the following type:
 
-```
+```javascript
 {
   x: number,       // x and y represent the top left corner of the selected region relative
   y: number,       // to the origin of the svg's viewable area
 
-  width: number,   // the width of selected region
-  height: number,  // the height of selected region
+  width: number,   // the width and height of selected region
+  height: number,  
 }
 ```
 
@@ -52,7 +52,7 @@ The callbacks will receive a single object parameter with the following type:
 />
 ```
 
-The `brushedArea` prop can alternatively be a render callback that will be passed a single object parameter with the shape `{ brush, container }`. The `brush` property is an object of the same type as that passed to the brush callbacks. The `container` property is an object with the shape `{ top, bottom, left, right }` describing the position of the `ReactBrush` container in the document.
+The `brushedArea` prop can alternatively be a render callback that will be passed a single object parameter with the shape `{ brush: Object, container: Object }`. The `brush` property is an object of the same type as that passed to the brush callbacks. The `container` property is an object with the shape `{ top: number, bottom: number, left: number, right: number }` describing the position of the `ReactBrush` container in the document.
 
 ```jsx
 <ReactBrush
@@ -78,7 +78,7 @@ Property  	| Type | 	Required		|	Default		|	  Description
 `onBrushStop` | `function` | no | `undefined` | The callback to use if any when a brush is stopped (the user releases mouse button `0`)
 `onBrushChange` | `function` | no | `undefined` | The callback to use if any when a brush is changed (the user drags while holding down mouse button `0`)
 `brushedArea` | `function` or `element` | no | `<BrushedArea />` | The element or render callback to use to render the brushed area
-`tag` | `string` `svg or g` | no | `svg` | The
+`tag` | `string` `("svg" or "g")` | no | `svg` | The base component used to render the `ReactBrush`. This can either be an `svg` or a `g`. In either case, props other than those specified here are passed on to the base component (if `svg` is used, `width` and `height` are also passed on).
 
 ### `<BrushedArea>` Props
 Property  	| Type | 	Required		|	Default		|	  Description
