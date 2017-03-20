@@ -185,8 +185,9 @@ export default class ReactBrush extends Component {
     delStyle.mozUserSelect = "none";
     delStyle.msUserSelect = "none";
 
-    if (this.props.onBrushStart) {
-      this.props.onBrushStart(getBrushedState(nextState, this.getBounds()));
+    const { onBrushStart } = this.props;
+    if (typeof onBrushStart === "function") {
+      onBrushStart(getBrushedState(nextState, this.getBounds()));
     }
   }
 
@@ -205,14 +206,16 @@ export default class ReactBrush extends Component {
     delStyle.mozUserSelect = mozUserSelect;
     delStyle.msUserSelect = msUserSelect;
 
-    if (this.props.onBrushStop) {
-      this.props.onBrushStop(getBrushedState(nextState, this.getBounds()));
+    const { onBrushStop } = this.props;
+    if (typeof onBrushStop === "function") {
+      onBrushStop(getBrushedState(nextState, this.getBounds()));
     }
   }
 
   brushChange(nextState) {
-    if (this.props.onBrushChange) {
-      this.props.onBrushChange(getBrushedState(nextState, this.getBounds()));
+    const { onBrushChange } = this.props;
+    if (typeof onBrushChange === "function") {
+      onBrushChange(getBrushedState(nextState, this.getBounds()));
     }
   }
 
