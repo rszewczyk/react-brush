@@ -40,7 +40,7 @@ const getBrushedState = (state, bounds) => {
   };
 };
 
-export default class Brushable extends Component {
+export default class ReactBrush extends Component {
   state = {
     mouseMove: 0,
     mouseDown: 0,
@@ -365,6 +365,10 @@ export const BrushedArea = (
     className,
   },
 ) => {
+  if (!(container && brush)) {
+    return null;
+  }
+
   const {
     width: brushWidth,
     height: brushHeight,
@@ -415,10 +419,10 @@ export const BrushedArea = (
 };
 
 BrushedArea.propTypes = {
-  brush: PropTypes.object.isRequired,
-  container: PropTypes.object.isRequired,
-  style: PropTypes.object,
+  container: PropTypes.object,
+  brush: PropTypes.object,
   fullWidth: PropTypes.bool,
   fullHeight: PropTypes.bool,
+  style: PropTypes.object,
   className: PropTypes.string,
 };
