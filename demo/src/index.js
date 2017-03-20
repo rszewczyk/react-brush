@@ -3,8 +3,11 @@ import ReactDOM from "react-dom";
 import ReactBrush, { BrushedArea } from "../../lib";
 import { scaleBand, scaleLinear } from "d3-scale";
 import max from "lodash/max";
+import "./index.css";
 
-const Wrapper = props => <div style={{ padding: "1rem" }} {...props} />;
+const Wrapper = props => (
+  <div style={{ padding: "16px", width: "432px" }} {...props} />
+);
 
 const barData = [1, 13, 4, 8, 17, 7, 4, 6];
 
@@ -41,55 +44,61 @@ class Chart extends React.Component {
   }
 }
 
-class Bars extends React.PureComponent {
-  render() {
-    const { height, width, data, selection } = this.props;
-    const xScale = scaleBand()
-      .rangeRound([0, width])
-      .padding(0.1)
-      .domain(data.map((d, i) => i));
-    const bandwidth = xScale.bandwidth();
-    const yScale = scaleLinear().rangeRound([height, 0]).domain([0, max(data)]);
+const Bars = ({ height, width, data, selection }) => {
+  const xScale = scaleBand()
+    .rangeRound([0, width])
+    .padding(0.1)
+    .domain(data.map((d, i) => i));
+  const bandwidth = xScale.bandwidth();
+  const yScale = scaleLinear().rangeRound([height, 0]).domain([0, max(data)]);
 
-    return (
-      <g>
-        {data.map((d, i) => {
-          let fill = "blue";
-          const x = xScale(i);
+  return (
+    <g>
+      {data.map((d, i) => {
+        let fill = "blue";
+        const x = xScale(i);
 
-          if (selection) {
-            const x0 = x;
-            const x1 = x + bandwidth;
-            const s0 = selection.x;
-            const s1 = s0 + selection.width;
+        if (selection) {
+          const x0 = x;
+          const x1 = x + bandwidth;
+          const s0 = selection.x;
+          const s1 = s0 + selection.width;
 
-            if (
-              (x0 >= s0 && x0 <= s1) ||
-              (x1 >= s0 && x1 <= s1) ||
-              (s0 >= x0 && s1 <= x1)
-            ) {
-              fill = "red";
-            }
+          if (
+            (x0 >= s0 && x0 <= s1) ||
+            (x1 >= s0 && x1 <= s1) ||
+            (s0 >= x0 && s1 <= x1)
+          ) {
+            fill = "red";
           }
+        }
 
-          return (
+        return (
+          <g key={i}>
             <rect
-              style={{ fill, cursor: "pointer" }}
-              key={i}
+              style={{ fill }}
               x={x}
               y={yScale(d)}
               width={bandwidth}
               height={height - yScale(d)}
+            />
+            <rect
+              style={{ fill, cursor: "pointer" }}
+              className="bar"
+              x={x}
+              y={0}
+              width={bandwidth}
+              height={height}
               onClick={() => {
                 alert(`you clicked: ${i}`);
               }}
             />
-          );
-        })}
-      </g>
-    );
-  }
-}
+          </g>
+        );
+      })}
+    </g>
+  );
+};
 
 ReactDOM.render(
   <div style={{ display: "flex", flexWrap: "wrap" }}>
