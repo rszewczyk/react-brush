@@ -78,8 +78,10 @@ export default class ReactBrush extends Component {
   }
 
   clearMouseDownTimer() {
-    clearTimeout(this._mouseDownTimer);
-    this._mouseDownTimer = null;
+    if (this._mouseDownTimer) {
+      clearTimeout(this._mouseDownTimer);
+      this._mouseDownTimer = null;
+    }
   }
 
   handleMouseDown = e => {
@@ -261,6 +263,7 @@ export default class ReactBrush extends Component {
   componentWillUnmount() {
     window.removeEventListener("mouseup", this.handleMouseUp);
     window.removeEventListener("mousemove", this.mouseMove);
+    this.clearMouseDownTimer();
   }
 
   renderOverlay() {
