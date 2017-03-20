@@ -19,6 +19,11 @@ module.exports = {
           path.resolve(__dirname, "../src"),
         ],
       },
+      {
+        test: /\.css$/,
+        loader: ["style-loader", "css-loader"],
+        include: [path.resolve(__dirname, "src")],
+      },
     ],
   },
   plugins: [
