@@ -305,7 +305,7 @@ export default class ReactBrush extends Component {
         <rect
           width={width}
           height={height}
-          style={{ opacity: 0, cursor: "crosshair" }}
+          style={{ opacity: 0, cursor: brushing ? "crosshair" : "auto" }}
           onMouseMove={this.mouseMove}
         />
       </g>
