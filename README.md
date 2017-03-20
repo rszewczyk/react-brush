@@ -64,6 +64,10 @@ The `brushedArea` prop can alternatively be a render callback that will be passe
 />
 ```
 
+`react-brush` only provides a brushed area during a brush and the callbacks to let you know what was brushed. How the selection should affect your elements is up to you to implement.
+
+`react-brush` composes well with other interactive graphical elements because it gets out of the way when a brush isn't active and won't interfere with other mouse events.
+
 See the demo for some working examples.
 
 ## API:
