@@ -6,10 +6,6 @@ import React, {
 } from "react";
 import { shallowEqual } from "./utils.js";
 
-const monotonicId = initial => {
-  return () => ++initial;
-};
-
 const mouseIsInBounds = (mouseEvent, rectangle) => {
   const { pageX: x, pageY: y } = mouseEvent;
   const { top, left, right, bottom } = rectangle;
@@ -19,11 +15,6 @@ const mouseIsInBounds = (mouseEvent, rectangle) => {
 
 const getBrushedState = (state, bounds) => {
   const {
-    mouseDown,
-    mouseMove,
-    mouseUp,
-    brushStart,
-
     mx0,
     my0,
     mx1,
@@ -42,10 +33,8 @@ const getBrushedState = (state, bounds) => {
 
 export default class ReactBrush extends Component {
   state = {
-    mouseMove: 0,
-    mouseDown: 0,
-    mouseUp: 1,
-    brushStart: 0,
+    mouseDown: false,
+    isBrushing: false,
 
     mx0: 0,
     my0: 0,
@@ -56,7 +45,6 @@ export default class ReactBrush extends Component {
   constructor(props) {
     super(props);
     this._userSelectStyles = {};
-    this._getId = monotonicId(this.state.mouseUp);
   }
 
   static propTypes = {
@@ -94,83 +82,83 @@ export default class ReactBrush extends Component {
     this._mouseDownTimer = null;
   }
 
-  mouseDown = e => {
-    if (this.props.onMouseDown) {
-      this.props.onMouseDown(e);
-    }
-
+  handleMouseDown = e => {
     const { button, pageX: mx0, pageY: my0 } = e;
-
-    if (e.button !== 0) {
-      return;
+    if (e.button === 0) {
+      this.setState(
+        {
+          mouseDown: true,
+          isBrushing: false,
+          mx0,
+          my0,
+          mx1: mx0,
+          my1: my0,
+        },
+        () => {
+          this.clearMouseDownTimer();
+          this._mouseDownTimer = setTimeout(
+            () => {
+              this.setState({ isBrushing: true });
+            },
+            300,
+          );
+        },
+      );
     }
 
-    this.setState({
-      mouseDown: this._getId(),
-      mx0,
-      my0,
-      mx1: mx0,
-      my1: my0,
-    });
-
-    this.clearMouseDownTimer();
-    this._mouseDownTimer = setTimeout(
-      () => {
-        this.setState({ brushStart: this._getId() });
-      },
-      300,
-    );
+    const { onMouseDown } = this.props;
+    if (typeof onMouseDown === "function") {
+      onMouseDown(e);
+    }
   };
 
-  mouseUp = e => {
-    const bounds = this.getBounds();
-    if (this.props.onMouseUp && mouseIsInBounds(e, bounds)) {
+  handleMouseUp = e => {
+    const { button, pageX: mx1, pageY: my1 } = e;
+    if (e.button === 0) {
+      this.clearMouseDownTimer();
+
+      this.setState({
+        mouseDown: false,
+        isBrushing: false,
+        mx1,
+        my1,
+      });
+    }
+
+    const { onMouseUp } = this.props;
+    if (
+      typeof onMouseUp === "function" && mouseIsInBounds(e, this.getBounds())
+    ) {
       this.props.onMouseUp(e);
     }
-
-    const { button, pageX: mx1, pageY: my1 } = e;
-
-    if (e.button !== 0) {
-      return;
-    }
-
-    this.clearMouseDownTimer();
-
-    this.setState({
-      mouseUp: this._getId(),
-      mx1,
-      my1,
-    });
   };
 
   mouseMove = e => {
-    const bounds = this.getBounds();
-    if (this.props.onMouseMove && mouseIsInBounds(e, bounds)) {
-      this.props.onMouseMove(e);
-    }
-
     const { pageX: mx1, pageY: my1 } = e;
 
-    this.setState(({ mx0, my0, mouseUp, mouseDown, brushStart }) => {
+    this.setState(({ mouseDown, isBrushing }) => {
       const state = {
-        mouseMove: this._getId(),
         mx1,
         my1,
       };
 
-      // end here if the mouse is not down or brush is already in progress
-      if (mouseDown < mouseUp || mouseUp < brushStart) {
+      //end here if the mouse is not down or brush is already in progress
+      if (!mouseDown || isBrushing) {
         return state;
       }
 
-      // has the mouse moved far enough to trigger a brush?
-      if (Math.hypot(Math.abs(mx0 - mx1), Math.abs(mx0 - my1)) >= 3) {
-        this.clearMouseDownTimer();
-        state.brushStart = this._getId();
-      }
+      this.clearMouseDownTimer();
+      state.isBrushing = true;
 
       return state;
     });
+
+    const { onMouseMove } = this.props;
+    if (
+      typeof onMouseMove === "function" && mouseIsInBounds(e, this.getBounds())
+    ) {
+      onMouseMove(e);
+    }
   };
 
   brushStart(nextState) {
@@ -226,11 +214,8 @@ export default class ReactBrush extends Component {
     }
   }
 
-  shouldComponentUpdate(
-    nextProps,
-    { mx1: nextMx1, my1: nextMy1, mouseMove: nextMouseMove, ...nextState },
-  ) {
-    const { mx1, my1, mouseMove, ...state } = this.state;
+  shouldComponentUpdate(nextProps, { mx1: nextx, my1: nexty, ...nextState }) {
+    const { mx1: x, my1: y, ...state } = this.state;
     if (
       !shallowEqual(this.props, nextProps) || !shallowEqual(state, nextState)
     ) {
@@ -238,47 +223,43 @@ export default class ReactBrush extends Component {
     }
 
     // only re-render on mouse movement if the user is actively brushing
-    if (nextState.brushStart > nextState.mouseUp) {
-      return mx1 !== nextMx1 || my1 !== nextMy1 || nextMouseMove !== mouseMove;
+    if (nextState.isBrushing === true) {
+      return x !== nextx || y !== nexty;
     }
 
     return false;
   }
 
   componentWillUpdate(nextProps, nextState) {
-    const { brushStart, mouseUp, mouseMove } = this.state;
-    const {
-      brushStart: nextBrushStart,
-      mouseUp: nextMouseUp,
-      mouseMove: nextMouseMove,
-    } = nextState;
+    const { isBrushing, x1: x, y1: y } = this.state;
+    const { isBrushing: nextIsBrushing, x1: nextx, y1: nexty } = nextState;
 
     // are we starting a brush?
-    if (nextBrushStart > nextMouseUp && brushStart < mouseUp) {
+    if (nextIsBrushing === true && isBrushing === false) {
       this.brushStart(nextState);
       return;
     }
 
     // are we ending a brush?
-    if (nextMouseUp > nextBrushStart && mouseUp < brushStart) {
+    if (nextIsBrushing === false && isBrushing === true) {
       this.brushStop(nextState);
       return;
     }
 
     // are we updating the brush?
-    if (nextMouseMove > mouseMove && nextBrushStart > nextMouseUp) {
+    if (nextIsBrushing === true && (nextx != x || nexty != y)) {
       this.brushChange(nextState);
       return;
     }
   }
 
   componentWillMount() {
-    window.addEventListener("mouseup", this.mouseUp);
+    window.addEventListener("mouseup", this.handleMouseUp);
     window.addEventListener("mousemove", this.mouseMove);
   }
 
   componentWillUnmount() {
-    window.removeEventListener("mouseup", this.mouseUp);
+    window.removeEventListener("mouseup", this.handleMouseUp);
     window.removeEventListener("mousemove", this.mouseMove);
   }
 
@@ -294,18 +275,18 @@ export default class ReactBrush extends Component {
     const brushProps = { brush, container };
 
     const { brushStart, mouseUp } = this.state;
-    const brushing = brushStart > mouseUp;
+    const { isBrushing } = this.state;
 
     return (
       <g>
-        {brushing &&
+        {isBrushing &&
           (isValidElement(brushedArea)
             ? cloneElement(brushedArea, brushProps)
             : brushedArea(brushProps))}
         <rect
           width={width}
           height={height}
-          style={{ opacity: 0, cursor: brushing ? "crosshair" : "auto" }}
+          style={{ opacity: 0, cursor: isBrushing ? "crosshair" : "auto" }}
         />
       </g>
     );
@@ -336,19 +317,19 @@ export default class ReactBrush extends Component {
     }
 
     const { brushStart, mouseUp } = this.state;
-    const brushing = brushStart > mouseUp;
+    const { isBrushing } = this.state;
 
     return (
       <Tag
-        onMouseDown={this.mouseDown}
+        onMouseDown={this.handleMouseDown}
         {...props}
         ref={r => {
           this.container = r;
         }}
       >
-        {!brushing && this.renderOverlay()}
+        {!isBrushing && this.renderOverlay()}
         {children}
-        {brushing && this.renderOverlay()}
+        {isBrushing && this.renderOverlay()}
       </Tag>
     );
   }
