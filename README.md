@@ -83,6 +83,8 @@ Property  	| Type | 	Required		|	Default		|	  Description
 `onBrushChange` | `function` | no | `undefined` | The callback to use if any when a brush is changed (the user drags while holding down mouse button `0`)
 `brushedArea` | `function` or `element` | no | `<BrushedArea />` | The element or render callback to use to render the brushed area
 `tag` | `string` `("svg" or "g")` | no | `svg` | The base component used to render the `ReactBrush`. This can either be an `svg` or a `g`. In either case, props other than those specified here are passed on to the base component (if `svg` is used, `width` and `height` are also passed on).
+`mouseMoveThreshold`| `number` | no | 5 | The number of pixels that the mouse needs to move after a mouse down before the brush starts.
+`mouseDownThreshold` | `number` | no | 500 | The number of milliseconds after a mouse down before the start of a brush.
 
 ### `<BrushedArea>` Props
 Property  	| Type | 	Required		|	Default		|	  Description
