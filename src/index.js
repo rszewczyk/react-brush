@@ -102,27 +102,14 @@ export default class ReactBrush extends Component {
     const delayBrush = mouseDownThreshold > 0 || moveMoveThreshold > 0;
 
     if (button === 0) {
-      this.setState(
-        {
-          mouseDown: true,
-          isBrushing: delayBrush ? false : true,
-          mx0,
-          my0,
-          mx1: mx0,
-          my1: my0,
-        },
-        () => {
-          if (mouseDownThreshold > 0) {
-            this.clearMouseDownTimer();
-            this._mouseDownTimer = setTimeout(
-              () => {
-                this.setState({ isBrushing: true });
-              },
-              mouseDownThreshold,
-            );
-          }
-        },
-      );
+      this.setState({
+        mouseDown: true,
+        isBrushing: delayBrush ? false : true,
+        mx0,
+        my0,
+        mx1: mx0,
+        my1: my0,
+      });
     }
 
     const { onMouseDown } = this.props;
@@ -264,23 +251,42 @@ export default class ReactBrush extends Component {
   }
 
   componentWillUpdate(nextProps, nextState) {
-    const { isBrushing, x1: x, y1: y } = this.state;
-    const { isBrushing: nextIsBrushing, x1: nextx, y1: nexty } = nextState;
+    const { isBrushing, x1: x, y1: y, mouseDown } = this.state;
+    const {
+      isBrushing: nextIsBrushing,
+      x1: nextx,
+      y1: nexty,
+      mouseDown: nextMouseDown,
+    } = nextState;
+
+    // if mouse went from up to down, schedule brush if needed
+    if (!mouseDown && nextMouseDown && !nextIsBrushing) {
+      const { mouseDownThreshold } = this.props;
+      if (mouseDownThreshold > 0) {
+        this._mouseDownTimer = setTimeout(
+          () => {
+            this.setState({ isBrushing: true });
+            this.clearMouseDownTimer();
+          },
+          mouseDownThreshold,
+        );
+      }
+    }
 
     // are we starting a brush?
-    if (nextIsBrushing === true && isBrushing === false) {
+    if (!isBrushing && nextIsBrushing) {
       this.brushStart(nextState);
       return;
     }
 
     // are we ending a brush?
-    if (nextIsBrushing === false && isBrushing === true) {
+    if (isBrushing && !nextIsBrushing) {
       this.brushStop(nextState);
       return;
     }
 
     // are we updating the brush?
-    if (nextIsBrushing === true && (nextx != x || nexty != y)) {
+    if (nextIsBrushing && (nextx != x || nexty != y)) {
       this.brushChange(nextState);
       return;
     }
