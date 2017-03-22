@@ -1,0 +1,7 @@
+.bar {
+  fill: black;
+  opacity: 0.0;
+  cursor: pointer;
+}
+
+.bar:hover { opacity: 0.2; }

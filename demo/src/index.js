@@ -1,104 +1,30 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import ReactBrush, { BrushedArea } from "../../lib";
-import { scaleBand, scaleLinear } from "d3-scale";
-import max from "lodash/max";
-import "./index.css";
+import Chart from "./chart";
+
+const chartData = [
+  {
+    value: "A",
+    count: 123,
+  },
+  {
+    value: "B",
+    count: 34,
+  },
+  {
+    value: "C",
+    count: 76,
+  },
+  {
+    value: "D",
+    count: 69,
+  },
+];
 
 const Wrapper = props => (
   <div style={{ padding: "16px", width: "432px" }} {...props} />
 );
-
-const barData = [1, 13, 4, 8, 17, 7, 4, 6];
-
-class Chart extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selection: null,
-    };
-  }
-
-  render() {
-    const { children, height, width, ...props } = this.props;
-    const child = React.Children.only(children);
-
-    return (
-      <ReactBrush
-        onBrushStart={() => {
-          this.setState({ selection: null });
-        }}
-        onBrushStop={selection => {
-          this.setState({ selection });
-        }}
-        height={height}
-        width={width}
-        {...props}
-        children={React.cloneElement(child, {
-          selection: this.state.selection,
-          height,
-          width,
-        })}
-      />
-    );
-  }
-}
-
-const Bars = ({ height, width, data, selection }) => {
-  const xScale = scaleBand()
-    .rangeRound([0, width])
-    .padding(0.1)
-    .domain(data.map((d, i) => i));
-  const bandwidth = xScale.bandwidth();
-  const yScale = scaleLinear().rangeRound([height, 0]).domain([0, max(data)]);
-
-  return (
-    <g>
-      {data.map((d, i) => {
-        let fill = "blue";
-        const x = xScale(i);
-
-        if (selection) {
-          const x0 = x;
-          const x1 = x + bandwidth;
-          const s0 = selection.x;
-          const s1 = s0 + selection.width;
-
-          if (
-            (x0 >= s0 && x0 <= s1) ||
-            (x1 >= s0 && x1 <= s1) ||
-            (s0 >= x0 && s1 <= x1)
-          ) {
-            fill = "red";
-          }
-        }
-
-        return (
-          <g key={i}>
-            <rect
-              style={{ fill }}
-              x={x}
-              y={yScale(d)}
-              width={bandwidth}
-              height={height - yScale(d)}
-            />
-            <rect
-              style={{ fill, cursor: "pointer" }}
-              className="bar"
-              x={x}
-              y={0}
-              width={bandwidth}
-              height={height}
-              onClick={() => {
-                alert(`you clicked: ${i}`);
-              }}
-            />
-          </g>
-        );
-      })}
-    </g>
-  );
-};
 
 ReactDOM.render(
   <div style={{ display: "flex", flexWrap: "wrap" }}>
@@ -174,10 +100,8 @@ ReactDOM.render(
         height={200}
         width={400}
         style={{ border: "solid 1px black" }}
-        brushedArea={<BrushedArea fullHeight />}
-      >
-        <Bars data={barData} />
-      </Chart>
+        data={chartData}
+      />
     </Wrapper>
   </div>,
   document.getElementById("root"),
