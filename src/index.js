@@ -13,6 +13,10 @@ const mouseIsInBounds = (mouseEvent, rectangle) => {
   return x >= left && x <= right && y >= top && y <= bottom;
 };
 
+const mouseMoveExceedsThreshold = ({ mx0, mx1, my0, my1 }, threshold) =>
+  threshold > 0 &&
+  Math.hypot(Math.abs(mx0 - mx1), Math.abs(my0 - my1)) >= threshold;
+
 const getBrushedState = (state, bounds) => {
   const {
     mx0,
@@ -55,6 +59,14 @@ export default class ReactBrush extends Component {
     onBrushChange: PropTypes.func,
     brushedArea: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
     tag: PropTypes.string,
+    mouseMoveThreshold: PropTypes.number,
+    mouseDownThreshold: PropTypes.number,
+  };
+
+  static defaultProps = {
+    tag: "svg",
+    mouseDownThreshold: 500,
+    mouseMoveThreshold: 5,
   };
 
   getBounds() {
@@ -86,24 +98,29 @@ export default class ReactBrush extends Component {
 
   handleMouseDown = e => {
     const { button, pageX: mx0, pageY: my0 } = e;
-    if (e.button === 0) {
+    const { mouseDownThreshold, mouseMoveThreshold } = this.props;
+    const delayBrush = mouseDownThreshold > 0 || moveMoveThreshold > 0;
+
+    if (button === 0) {
       this.setState(
         {
           mouseDown: true,
-          isBrushing: false,
+          isBrushing: delayBrush ? false : true,
           mx0,
           my0,
           mx1: mx0,
           my1: my0,
         },
         () => {
-          this.clearMouseDownTimer();
-          this._mouseDownTimer = setTimeout(
-            () => {
-              this.setState({ isBrushing: true });
-            },
-            300,
-          );
+          if (mouseDownThreshold > 0) {
+            this.clearMouseDownTimer();
+            this._mouseDownTimer = setTimeout(
+              () => {
+                this.setState({ isBrushing: true });
+              },
+              mouseDownThreshold,
+            );
+          }
         },
       );
     }
@@ -144,8 +161,19 @@ export default class ReactBrush extends Component {
         my1,
       };
 
-      //end here if the mouse is not down or brush is already in progress
+      // end here if the mouse is not down or brush is already in progress
       if (!mouseDown || isBrushing) {
+        return state;
+      }
+
+      // end here if the mouse has not moved far enough to trigger a brush
+      const { mx0, my0 } = this.state;
+      if (
+        !mouseMoveExceedsThreshold(
+          { mx1, my1, mx0, my0 },
+          this.props.mouseMoveThreshold,
+        )
+      ) {
         return state;
       }
 
@@ -302,18 +330,20 @@ export default class ReactBrush extends Component {
     const {
       // these props aren't used here, but we prevent them from being passed on
       // to the underlying tag
-      onMouseDown,
       onMouseUp,
       onMouseMove,
       onBrushStop,
       onBrushStart,
       onBrushChange,
       brushedArea,
+      mouseMoveThreshold,
+      mouseDownThreshold,
 
-      tag: Tag = "svg",
+      tag: Tag,
       children,
       width,
       height,
+      onMouseDown,
       ...props
     } = this.props;
 
